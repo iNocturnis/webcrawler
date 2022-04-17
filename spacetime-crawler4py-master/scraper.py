@@ -95,6 +95,7 @@ def is_valid(url):
             return False
         elif parsed.fragment:
             return False
+        # will add trap check here most likely 
         else:
             return True
 

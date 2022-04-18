@@ -39,7 +39,7 @@ def is_a_loop_trap(url):
     return False
 
 # Tests to see if the url is ok to be crawled by checking against the robots.txt
-# file. It does so by checking the URL or URL prefixes 
+# file. It does so by checking the URL or URL prefixes and will return true if page is allowed to be crawled
 # https://docs.python.org/3/library/urllib.robotparser.html#urllib.robotparser.RobotFileParser
 # http://pymotw.com/2/robotparser/
 def robots_ok(baseurl):
@@ -128,6 +128,8 @@ def is_valid(url):
         elif parsed.fragment:
             return False
         elif is_a_loop_trap(url):
+            return False
+        elif not robots_ok(url):
             return False
         else:
             return True

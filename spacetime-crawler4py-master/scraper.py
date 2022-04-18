@@ -1,3 +1,4 @@
+from operator import truediv
 import re
 from urllib.parse import urlparse
 from urllib.parse import urljoin
@@ -58,6 +59,24 @@ def extract_next_links(url, resp):
         print("Page error !")
     return pages
 
+# hopefuly fixes some loop traps and repeating (looping) directories
+# the amount of repeated subdirectories allowed can be changed
+# https://subscription.packtpub.com/book/big-data-and-business-intelligence/9781782164364/1/ch01lvl1sec11/crawling-your-first-website
+# https://www.searchenginejournal.com/crawler-traps-causes-solutions-prevention/305781/
+def is_a_loop_trap(url):
+    word_dict = {}
+    parsed = urlparse(url)
+    url_path = str(parsed.path)
+    word_list = url_path.split('/')
+    for word in word_list:
+        if word in word_dict:
+            word_dict[word] += 1
+            if word_dict[word] == 3:
+                return True
+        else:
+            word_dict[word] = 1
+    return False
+
 #*.ics.uci.edu/*
 #*.cs.uci.edu/*
 #*.informatics.uci.edu/*
@@ -95,7 +114,8 @@ def is_valid(url):
             return False
         elif parsed.fragment:
             return False
-        # will add trap check here most likely 
+        elif is_a_loop_trap(url):
+            return False
         else:
             return True
 

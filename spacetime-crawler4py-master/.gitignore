@@ -1,0 +1,4 @@
+__pycache__/*
+logs/*
+utils/*
+crawler/__pycache__/*

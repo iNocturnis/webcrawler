@@ -1,7 +1,9 @@
 from operator import truediv
 import re
+from urllib import robotparser
 from urllib.parse import urlparse
 from urllib.parse import urljoin
+from urllib.robotparser import RobotFileParser
 from bs4 import BeautifulSoup
 
 def scraper(url, resp):
@@ -17,6 +19,35 @@ def scraper(url, resp):
             invalid_links.write("From: " + url + "\n")
             invalid_links.write(link + "\n")
     return links_valid
+
+# hopefuly fixes some loop traps and repeating (looping) directories
+# the amount of repeated subdirectories allowed can be changed
+# https://subscription.packtpub.com/book/big-data-and-business-intelligence/9781782164364/1/ch01lvl1sec11/crawling-your-first-website
+# https://www.searchenginejournal.com/crawler-traps-causes-solutions-prevention/305781/
+def is_a_loop_trap(url):
+    word_dict = {}
+    parsed = urlparse(url)
+    url_path = str(parsed.path)
+    word_list = url_path.split('/')
+    for word in word_list:
+        if word in word_dict:
+            word_dict[word] += 1
+            if word_dict[word] == 3:
+                return True
+        else:
+            word_dict[word] = 1
+    return False
+
+# Tests to see if the url is ok to be crawled by checking against the robots.txt
+# file. It does so by checking the URL or URL prefixes 
+# https://docs.python.org/3/library/urllib.robotparser.html#urllib.robotparser.RobotFileParser
+# http://pymotw.com/2/robotparser/
+def robots_ok(baseurl):
+    eva = robotparser.RobotFileParser()
+    rooturl = str(urljoin(baseurl, '/')[:-1])   # get each subdomain by itself
+    eva.set_url(rooturl + "/robots.txt")         # set location of robots.txt 
+    eva.read()                                  # read and fead to parser
+    return eva.can_fetch('*', baseurl)          # returns true if useragent is allowed to crawl
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -58,24 +89,6 @@ def extract_next_links(url, resp):
     else:
         print("Page error !")
     return pages
-
-# hopefuly fixes some loop traps and repeating (looping) directories
-# the amount of repeated subdirectories allowed can be changed
-# https://subscription.packtpub.com/book/big-data-and-business-intelligence/9781782164364/1/ch01lvl1sec11/crawling-your-first-website
-# https://www.searchenginejournal.com/crawler-traps-causes-solutions-prevention/305781/
-def is_a_loop_trap(url):
-    word_dict = {}
-    parsed = urlparse(url)
-    url_path = str(parsed.path)
-    word_list = url_path.split('/')
-    for word in word_list:
-        if word in word_dict:
-            word_dict[word] += 1
-            if word_dict[word] == 3:
-                return True
-        else:
-            word_dict[word] = 1
-    return False
 
 #*.ics.uci.edu/*
 #*.cs.uci.edu/*

@@ -82,7 +82,13 @@ def extract_next_links(url, resp):
             #skipping query with specific actions which mutate the websites and cause a trap
             if "do=" in href_link:
                 continue
-
+            '''
+            # this is currently in the is_vaild but implimended in a different way, don't know which one would make more sense
+            # skip as not allowed
+            if not robots_ok(href_link):
+                continue
+            '''
+            
             tempFile.write(href_link + "\n")
             #Adding to the boi wonder pages
             pages.append(href_link)
@@ -129,6 +135,7 @@ def is_valid(url):
             return False
         elif is_a_loop_trap(url):
             return False
+        # maybe this should go in the next link?
         elif not robots_ok(url):
             return False
         else:

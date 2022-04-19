@@ -147,6 +147,9 @@ def is_valid(url):
         # this fixes any search box that keeps going page to page, currenty allow a depth of 2 filters 
         elif re.match(r".*(&filter%.*){3,}",parsed.path.lower()):
             return False
+        # this is for urls which when opened, download a file (do we want to download these files and tokenize them)
+        # elif re.match(r"^.*\&format=(\D{3,4})\Z$",parsed.path.lower()):
+        #     return False
         # another looping directory check but more advanced than the one contained in is_a_trap
         elif re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$",parsed.path.lower()):
             return False

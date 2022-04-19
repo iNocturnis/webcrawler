@@ -4,6 +4,10 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
 def scraper(url, resp):
+    #initialize set for unique links
+    #used a set for elimatining duplicates
+    uniques = set() 
+
     links = extract_next_links(url, resp)
     links_valid = list()
     valid_links = open("valid_links.txt",'a')
@@ -12,9 +16,21 @@ def scraper(url, resp):
         if is_valid(link):
             links_valid.append(link)
             valid_links.write(link + "\n")
+
+            #turn into a urlparse object
+            #removed fragment in order to have "unique" links
+            remove_frag = urlparse(url)
+            remove_frag = remove_frag._replace(fragment = '')
+            uniques.add(remove_frag) 
         else:
             invalid_links.write("From: " + url + "\n")
             invalid_links.write(link + "\n")
+
+    #creating text file that includes the number of unique links
+    f = open("numUniqueLinks.txt", "w")
+    f.write("{length}".format(length = len(uniques)))
+    f.close()
+
     return links_valid
 
 def extract_next_links(url, resp):

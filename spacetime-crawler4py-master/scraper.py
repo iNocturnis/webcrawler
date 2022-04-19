@@ -138,6 +138,11 @@ def is_valid(url):
         # maybe this should go in the next link?
         elif not robots_ok(url):
             return False
+        # https://support.archive-it.org/hc/en-us/articles/208332963-Modify-crawl-scope-with-a-Regular-Expression
+        # add lem check
+        # add another dir check
+        # add extra dir check
+        # add cal check
         else:
             return True
 

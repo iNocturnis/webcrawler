@@ -142,7 +142,10 @@ def is_valid(url):
         # https://support.archive-it.org/hc/en-us/articles/208332963-Modify-crawl-scope-with-a-Regular-Expression
         # length check for looping filters and queries (could add hash check for similarity or regex, but don't know if we want to as this works well enought)
         # we can adjust it based on what the cralwer does as well
-        elif len(url) > 150:
+        elif len(url) > 169:
+            return False
+        # this fixes any search box that keeps going page to page, currenty allow a depth of 2 filters 
+        elif re.match(r".*(&filter%.*){3,}",parsed.path.lower()):
             return False
         # another looping directory check but more advanced than the one contained in is_a_trap
         elif re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$",parsed.path.lower()):

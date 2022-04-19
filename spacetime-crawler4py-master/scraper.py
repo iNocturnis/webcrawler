@@ -141,7 +141,7 @@ def is_valid(url):
         # https://support.archive-it.org/hc/en-us/articles/208332963-Modify-crawl-scope-with-a-Regular-Expression
         # add lem check
         # add another dir check
-        # add extra dir check
+        # add extra dir check (we can add as we find)
         # add cal check
         else:
             return True

@@ -1,3 +1,4 @@
+from distutils.filelist import findall
 from operator import truediv
 import re
 from urllib import robotparser
@@ -44,8 +45,8 @@ def is_a_loop_trap(url):
 # http://pymotw.com/2/robotparser/
 def robots_ok(baseurl):
     eva = robotparser.RobotFileParser()
-    rooturl = str(urljoin(baseurl, '/')[:-1])   # get each subdomain by itself
-    eva.set_url(rooturl + "/robots.txt")         # set location of robots.txt 
+    rooturl = str(urljoin(baseurl, '/')[:-1])   # get each path by itself
+    eva.set_url(rooturl + "/robots.txt")        # set location of robots.txt 
     eva.read()                                  # read and fead to parser
     return eva.can_fetch('*', baseurl)          # returns true if useragent is allowed to crawl
 
@@ -139,10 +140,21 @@ def is_valid(url):
         elif not robots_ok(url):
             return False
         # https://support.archive-it.org/hc/en-us/articles/208332963-Modify-crawl-scope-with-a-Regular-Expression
-        # add lem check
-        # add another dir check
-        # add extra dir check (we can add as we find)
-        # add cal check
+        # length check for looping filters and queries (could add hash check for similarity or regex, but don't know if we want to as this works well enought)
+        # we can adjust it based on what the cralwer does as well
+        elif len(url) > 150:
+            return False
+        # another looping directory check but more advanced than the one contained in is_a_trap
+        elif re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$",parsed.path.lower()):
+            return False
+        # extra directories check (we can add as we find)
+        elif re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", parsed.path.lower()):
+            return False
+        # calendar checks plus adding or downloading calendar (ical)
+        elif re.match(r"^.*calendar.*$",parsed.path.lower()):
+            return False
+        elif parsed.query.find('ical') != -1:
+            return False 
         else:
             return True
 

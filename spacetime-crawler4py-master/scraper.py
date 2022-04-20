@@ -1,13 +1,10 @@
 from distutils.filelist import findall
 from operator import truediv
 import re
-import requests
-from urllib import robotparser
-from collections import defaultdict
 from urllib.parse import urlparse
 from urllib.parse import urljoin
-from urllib.robotparser import RobotFileParser
 from bs4 import BeautifulSoup
+from robotsokay import *
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -22,35 +19,6 @@ def scraper(url, resp):
             invalid_links.write("From: " + url + "\n")
             invalid_links.write(link + "\n")
     return links_valid
-
-# Tests to see if the url is ok to be crawled by checking against the robots.txt
-# file. return true if page is allowed to be crawled, returns true if not robots file, and false otherwise
-# https://docs.python.org/3/library/urllib.robotparser.html#urllib.robotparser.RobotFileParser
-# http://pymotw.com/2/robotparser/
-# https://stackoverflow.com/questions/43085744/parsing-robots-txt-in-python
-robots_seen = dict() # all robots go here (global so we can store over all site)
-def robots_ok(parsed)->bool:
-    '''
-    eva = robotparser.RobotFileParser()
-    rooturl = str(urljoin(baseurl, '/')[:-1])   # get each path by itself
-    eva.set_url(rooturl + "/robots.txt")        # set location of robots.txt 
-    eva.read()                                  # read and fead to parser
-    return eva.can_fetch('*', baseurl)          # returns true if useragent is allowed to crawl
-    '''
-    global robots_seen                                  # global dict for files
-    robots_seen[parsed.netloc] = False                  # default seen
-    try:
-        url = 'http://' + parsed.netloc + '/robots.txt' # filter url and set
-        sitemap = requests.get(url)                     # sitmap get
-        if sitemap.status_code != 200:                  # no file so let her rip
-            return True
-        eva = robotparser.RobotFileParser(url)          
-        eva.read()
-        if eva.can_fetch('*', url):                     # if eva can see url add to dict
-            robots_seen[parsed.netloc] = True
-        return robots_seen[parsed.netloc]               # the dict 
-    except:
-        return False                                    # default
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -85,12 +53,13 @@ def extract_next_links(url, resp):
             #skipping query with specific actions which mutate the websites and cause a trap
             if "do=" in href_link:
                 continue
-        
-            # idk if this is too expensive will have to test, don't think that it should go into is_vaild??
-            parsed = urlparse(href_link)
-            if not robots_ok(parsed):
+
+            # don't know if this is too expensive, otherwise idk
+            # takes parsed url and if not ok on robots goes next, else we can write file    
+            parsed = urlparse(href_link)    
+            if not robots_are_ok(parsed):
                 continue
-            
+
             tempFile.write(href_link + "\n")
             #Adding to the boi wonder pages
             pages.append(href_link)

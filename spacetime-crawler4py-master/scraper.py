@@ -1,7 +1,9 @@
 from distutils.filelist import findall
 from operator import truediv
 import re
+import requests
 from urllib import robotparser
+from collections import defaultdict
 from urllib.parse import urlparse
 from urllib.parse import urljoin
 from urllib.robotparser import RobotFileParser
@@ -21,34 +23,34 @@ def scraper(url, resp):
             invalid_links.write(link + "\n")
     return links_valid
 
-# hopefuly fixes some loop traps and repeating (looping) directories
-# the amount of repeated subdirectories allowed can be changed
-# https://subscription.packtpub.com/book/big-data-and-business-intelligence/9781782164364/1/ch01lvl1sec11/crawling-your-first-website
-# https://www.searchenginejournal.com/crawler-traps-causes-solutions-prevention/305781/
-def is_a_loop_trap(url):
-    word_dict = {}
-    parsed = urlparse(url)
-    url_path = str(parsed.path)
-    word_list = url_path.split('/')
-    for word in word_list:
-        if word in word_dict:
-            word_dict[word] += 1
-            if word_dict[word] == 3:
-                return True
-        else:
-            word_dict[word] = 1
-    return False
-
 # Tests to see if the url is ok to be crawled by checking against the robots.txt
-# file. It does so by checking the URL or URL prefixes and will return true if page is allowed to be crawled
+# file. return true if page is allowed to be crawled, returns true if not robots file, and false otherwise
 # https://docs.python.org/3/library/urllib.robotparser.html#urllib.robotparser.RobotFileParser
 # http://pymotw.com/2/robotparser/
-def robots_ok(baseurl):
+# https://stackoverflow.com/questions/43085744/parsing-robots-txt-in-python
+robots_seen = dict() # all robots go here (global so we can store over all site)
+def robots_ok(parsed)->bool:
+    '''
     eva = robotparser.RobotFileParser()
     rooturl = str(urljoin(baseurl, '/')[:-1])   # get each path by itself
     eva.set_url(rooturl + "/robots.txt")        # set location of robots.txt 
     eva.read()                                  # read and fead to parser
     return eva.can_fetch('*', baseurl)          # returns true if useragent is allowed to crawl
+    '''
+    global robots_seen                                  # global dict for files
+    robots_seen[parsed.netloc] = False                  # default seen
+    try:
+        url = 'http://' + parsed.netloc + '/robots.txt' # filter url and set
+        sitemap = requests.get(url)                     # sitmap get
+        if sitemap.status_code != 200:                  # no file so let her rip
+            return True
+        eva = robotparser.RobotFileParser(url)          
+        eva.read()
+        if eva.can_fetch('*', url):                     # if eva can see url add to dict
+            robots_seen[parsed.netloc] = True
+        return robots_seen[parsed.netloc]               # the dict 
+    except:
+        return False                                    # default
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -83,12 +85,11 @@ def extract_next_links(url, resp):
             #skipping query with specific actions which mutate the websites and cause a trap
             if "do=" in href_link:
                 continue
-            '''
-            # this is currently in the is_vaild but implimended in a different way, don't know which one would make more sense
-            # skip as not allowed
-            if not robots_ok(href_link):
+        
+            # idk if this is too expensive will have to test, don't think that it should go into is_vaild??
+            parsed = urlparse(href_link)
+            if not robots_ok(parsed):
                 continue
-            '''
             
             tempFile.write(href_link + "\n")
             #Adding to the boi wonder pages
@@ -113,6 +114,7 @@ def is_valid(url):
     try:
         #Gotta check if they are in the domain
         parsed = urlparse(url)
+        url_parsed_path = parsed.path.lower()   # this may help speed things up a little bit (less calls to parsed.path)
         if parsed.scheme not in set(["http", "https"]):
             return False
         elif re.match(
@@ -134,30 +136,25 @@ def is_valid(url):
             return False
         elif parsed.fragment:
             return False
-        elif is_a_loop_trap(url):
-            return False
-        # maybe this should go in the next link?
-        elif not robots_ok(url):
-            return False
         # https://support.archive-it.org/hc/en-us/articles/208332963-Modify-crawl-scope-with-a-Regular-Expression
         # length check for looping filters and queries (could add hash check for similarity or regex, but don't know if we want to as this works well enought)
         # we can adjust it based on what the cralwer does as well
         elif len(url) > 169:
             return False
         # this fixes any search box that keeps going page to page, currenty allow a depth of 2 filters 
-        elif re.match(r".*(&filter%.*){3,}",parsed.path.lower()):
+        elif re.match(r".*(&filter%.*){3,}",url_parsed_path):
             return False
         # this is for urls which when opened, download a file (do we want to download these files and tokenize them)
-        # elif re.match(r"^.*\&format=(\D{3,4})\Z$",parsed.path.lower()):
+        # elif re.match(r"^.*\&format=(\D{3,4})\Z$",url_parsed_path):
         #     return False
         # another looping directory check but more advanced than the one contained in is_a_trap
-        elif re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$",parsed.path.lower()):
+        elif re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$",url_parsed_path):
             return False
         # extra directories check (we can add as we find)
-        elif re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", parsed.path.lower()):
+        elif re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", url_parsed_path):
             return False
         # calendar checks plus adding or downloading calendar (ical)
-        elif re.match(r"^.*calendar.*$",parsed.path.lower()):
+        elif re.match(r"^.*calendar.*$",url_parsed_path):
             return False
         elif parsed.query.find('ical') != -1:
             return False 

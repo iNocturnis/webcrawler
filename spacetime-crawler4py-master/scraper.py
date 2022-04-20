@@ -17,33 +17,6 @@ from datacollection import *
 #       it'll show in the console/terminal if you run the code i believe. it appeared in mine
 
 def scraper(url, resp):
-    # initialize set for unique links
-    #       used a set for elimatining duplicates
-    uniques = set() 
-    # have to add the original url to the unique set
-    copyoriginal = url
-    uniques.add(removeFragment(copyoriginal))
-
-    # initializing longest for finding the longest page
-    max = -9999
-    longest = None
-
-    # have to do this for the original url
-    tok = tokenize(url)
-    if len(tok) > max:
-        max = len(tok)
-        longest = url
-
-    # grand_dict is a dictionary that contains every word over the entire set of pages (excluding stop words)
-    #       key: word , value: frequencies
-    grand_dict = dict()
-    tok = removeStopWords(tok)
-    computeFrequencies(tok, grand_dict)
-
-    # ics is a dict with subdomains
-    ics = dict()
-    
-
     links = extract_next_links(url, resp)
     links_valid = list()
     valid_links = open("valid_links.txt",'a')
@@ -54,39 +27,14 @@ def scraper(url, resp):
         if is_valid(link):
             links_valid.append(link)
             valid_links.write(link + "\n")
-
-            # Answering q1 for report
-            uniques.add(removeFragment(link)) 
-
-            # Answering q2
-            tempTok = tokenize(link)
-            if len(tempTok) > max:
-                max = len(tempTok)
-                longest = link
-
-
-            # Answering q3
-            tempTok = removeStopWords(tempTok)
-            computeFrequencies(tempTok, grand_dict)
-
-            # Answering q4 
-            fragless = removeFragment(link)
-            domain = findDomains(fragless.netloc)
-            if domain[1] == 'ics':
-                if domain[0] not in ics:
-                    ics[domain[0]] = urlData(link, domain[0], domain[1])
-                else:
-                    if fragless not in ics[domain[0]].getUniques():
-                        ics[domain[0]].appendUnique(fragless)
-                    
-
         else:
             invalid_links.write("From: " + url + "\n")
             invalid_links.write(link + "\n")
 
+    # Needs to be moved
     # creating text file that includes the number of unique links
     f = open("q1.txt", "w")
-    f.write("Number of unique pages: {length}".format(length = len(uniques)))
+    f.write("Number of unique pages: {length}\n".format(length = len(uniques)))
     f.close()
 
     # creating text file for question 2
@@ -102,7 +50,8 @@ def scraper(url, resp):
         if i == 50:
             break
         else:
-            f.write(k, ':', v)
+            f.write(k, ':', v, '\n')
+            i += 1
     f.close()
 
     # creating text file for question 4

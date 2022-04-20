@@ -6,12 +6,24 @@ from queue import Queue, Empty
 
 from utils import get_logger, get_urlhash, normalize
 from scraper import is_valid
+from datacollection import *
 
 class Frontier(object):
     def __init__(self, config, restart):
         self.logger = get_logger("FRONTIER")
         self.config = config
         self.to_be_downloaded = list()
+        
+        # data collection is going to happen in the frontier
+        # uniques encompass overall unique links
+        self.uniques = set() 
+        # grand_dict encompasses all the words over the entire set of links
+        self.grand_dict = dict()
+        # ics dict contains all subdomains of ics
+        self.ics = dict()
+        # used to find the longest page
+        self.max = -9999
+        self.longest = None
         
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.
@@ -60,7 +72,31 @@ class Frontier(object):
             self.save[urlhash] = (url, False)
             self.save.sync()
             self.to_be_downloaded.append(url)
-    
+        
+        # Q1
+        self.uniques.add(removeFragment(url)) 
+
+        # Q2
+        tempTok = tokenize(url)
+        if len(tempTok) > max:
+                self.max = len(tempTok)
+                self.longest = url
+
+        # Q3
+        tempTok = removeStopWords(tempTok)
+        computeFrequencies(tempTok, self.grand_dict)
+
+        # Q4
+        fragless = removeFragment(url)
+        domain = findDomains(fragless.netloc)
+        if domain[1] == 'ics':
+            if domain[0] not in self.ics:
+                self.ics[domain[0]] = urlData(url, domain[0], domain[1])
+            else:
+                if fragless not in self.ics[domain[0]].getUniques():
+                    self.ics[domain[0]].appendUnique(fragless)
+
+
     def mark_url_complete(self, url):
         urlhash = get_urlhash(url)
         if urlhash not in self.save:

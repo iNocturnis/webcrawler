@@ -1,34 +1,115 @@
 import re
+import urllib.request
 from urllib.parse import urlparse
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.corpus import words
+import html2text
+import nltk
+#moved all my code to a separted py file and imported it here
+from datacollection import *
+
+# nltk.download('stopwords')
+# nltk.download('words')
+# there is another nltk.download() requirement but I removed it so i forgot what it was
+#       it'll show in the console/terminal if you run the code i believe. it appeared in mine
 
 def scraper(url, resp):
-    #initialize set for unique links
-    #used a set for elimatining duplicates
+    # initialize set for unique links
+    #       used a set for elimatining duplicates
     uniques = set() 
+    # have to add the original url to the unique set
+    copyoriginal = url
+    uniques.add(removeFragment(copyoriginal))
+
+    # initializing longest for finding the longest page
+    max = -9999
+    longest = None
+
+    # have to do this for the original url
+    tok = tokenize(url)
+    if len(tok) > max:
+        max = len(tok)
+        longest = url
+
+    # grand_dict is a dictionary that contains every word over the entire set of pages (excluding stop words)
+    #       key: word , value: frequencies
+    grand_dict = dict()
+    tok = removeStopWords(tok)
+    computeFrequencies(tok, grand_dict)
+
+    # ics is a dict with subdomains
+    ics = dict()
+    
 
     links = extract_next_links(url, resp)
     links_valid = list()
     valid_links = open("valid_links.txt",'a')
     invalid_links = open("invalid_links.txt",'a')
+
+    
     for link in links:
         if is_valid(link):
             links_valid.append(link)
             valid_links.write(link + "\n")
 
-            #turn into a urlparse object
-            #removed fragment in order to have "unique" links
-            remove_frag = urlparse(url)
-            remove_frag = remove_frag._replace(fragment = '')
-            uniques.add(remove_frag) 
+            # Answering q1 for report
+            uniques.add(removeFragment(link)) 
+
+            # Answering q2
+            tempTok = tokenize(link)
+            if len(tempTok) > max:
+                max = len(tempTok)
+                longest = link
+
+
+            # Answering q3
+            tempTok = removeStopWords(tempTok)
+            computeFrequencies(tempTok, grand_dict)
+
+            # Answering q4 
+            fragless = removeFragment(link)
+            domain = findDomains(fragless.netloc)
+            if domain[1] == 'ics':
+                if domain[0] not in ics:
+                    ics[domain[0]] = urlData(link, domain[0], domain[1])
+                else:
+                    if fragless not in ics[domain[0]].getUniques():
+                        ics[domain[0]].appendUnique(fragless)
+                    
+
         else:
             invalid_links.write("From: " + url + "\n")
             invalid_links.write(link + "\n")
 
-    #creating text file that includes the number of unique links
-    f = open("numUniqueLinks.txt", "w")
-    f.write("{length}".format(length = len(uniques)))
+    # creating text file that includes the number of unique links
+    f = open("q1.txt", "w")
+    f.write("Number of unique pages: {length}".format(length = len(uniques)))
+    f.close()
+
+    # creating text file for question 2
+    f = open("q2.txt", "w")
+    f.write("Largest page url: {url} \nLength of page: {length}".format(url = longest, length = max))
+    f.close()
+
+    # creating text file for question 3
+    f = open("q3.txt", "w")
+    sortedGrandDict = {k: v for k, v in sorted(grand_dict.items(), key=lambda item: item[1], reverse = True)}
+    i = 0
+    for k, v in sortedGrandDict.items():
+        if i == 50:
+            break
+        else:
+            f.write(k, ':', v)
+    f.close()
+
+    # creating text file for question 4
+    sortedDictKeys = sorted(ics.keys())
+    f = open("q4.txt", "w")
+    for i in sortedDictKeys:
+        f.write("{url}, {num}".format(url = ics[i].getNiceLink(), num = len(ics[i].getUniques())))
     f.close()
 
     return links_valid

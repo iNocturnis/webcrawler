@@ -50,7 +50,7 @@ def scraper(url, resp):
         if i == 50:
             break
         else:
-            f.write(k, ':', v, '\n')
+            f.write("{}: {}\n".format(k, v))
             i += 1
     f.close()
 

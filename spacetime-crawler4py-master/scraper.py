@@ -24,7 +24,7 @@ from datacollection import *
 def scraper(url, resp):
     links = extract_next_links(url, resp)
 
-    links_valid = list()
+    links_valid = set()
     #valid_links = open("valid_links.txt",'a')
     #invalid_links = open("invalid_links.txt",'a')
 
@@ -32,7 +32,7 @@ def scraper(url, resp):
     for link in links:
         tic = time.perf_counter()
         if is_valid(link):
-            links_valid.append(link)
+            links_valid.add(link)
             toc = time.perf_counter()
             print(f"Took {toc - tic:0.4f} seconds to do validate url")
             #valid_links.write(link + "\n")
@@ -83,7 +83,7 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    pages = list()
+    pages = set()
     if resp.status == 200:
         #do stuff
         soup = BeautifulSoup(resp.raw_response.content)
@@ -115,7 +115,7 @@ def extract_next_links(url, resp):
             
             #tempFile.write(href_link + "\n")
             #Adding to the boi wonder pages
-            pages.append(href_link)
+            pages.add(href_link)
     else:
         print("Page error !")
     return pages

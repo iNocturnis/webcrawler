@@ -111,17 +111,17 @@ class Frontier(object):
 
 
         f = open("q1.txt", "w")
-        f.write("Number of unique pages: {length}\n".format(length = len(uniques)))
+        f.write("Number of unique pages: {length}\n".format(length = len(self.uniques)))
         f.close()
 
         # creating text file for question 2
         f = open("q2.txt", "w")
-        f.write("Largest page url: {url} \nLength of page: {length}".format(url = longest, length = max))
+        f.write("Largest page url: {url} \nLength of page: {length}".format(url = self.longest, length = self.max))
         f.close()
 
         # creating text file for question 3
         f = open("q3.txt", "w")
-        sortedGrandDict = {k: v for k, v in sorted(grand_dict.items(), key=lambda item: item[1], reverse = True)}
+        sortedGrandDict = {k: v for k, v in sorted(self.grand_dict.items(), key=lambda item: item[1], reverse = True)}
         i = 0
         for k, v in sortedGrandDict.items():
             if i == 50:
@@ -132,10 +132,10 @@ class Frontier(object):
         f.close()
 
         # creating text file for question 4
-        sortedDictKeys = sorted(ics.keys())
+        sortedDictKeys = sorted(self.ics.keys())
         f = open("q4.txt", "w")
         for i in sortedDictKeys:
-            f.write("{url}, {num}".format(url = ics[i].getNiceLink(), num = len(ics[i].getUniques())))
+            f.write("{url}, {num}".format(url = self.ics[i].getNiceLink(), num = len(self.ics[i].getUniques())))
         f.close()
         
 

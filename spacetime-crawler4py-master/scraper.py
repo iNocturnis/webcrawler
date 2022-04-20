@@ -139,24 +139,24 @@ def is_valid(url):
         # https://support.archive-it.org/hc/en-us/articles/208332963-Modify-crawl-scope-with-a-Regular-Expression
         # length check for looping filters and queries (could add hash check for similarity or regex, but don't know if we want to as this works well enought)
         # we can adjust it based on what the cralwer does as well
-        elif len(url) > 169:
+        if len(url) > 169:
             return False
         # this fixes any search box that keeps going page to page, currenty allow a depth of 2 filters 
-        elif re.match(r".*(&filter%.*){3,}",url_parsed_path):
+        if re.match(r".*(&filter%.*){3,}",url_parsed_path):
             return False
         # this is for urls which when opened, download a file (do we want to download these files and tokenize them)
         # elif re.match(r"^.*\&format=(\D{3,4})\Z$",url_parsed_path):
         #     return False
         # another looping directory check but more advanced than the one contained in is_a_trap
-        elif re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$",url_parsed_path):
+        if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$",url_parsed_path):
             return False
         # extra directories check (we can add as we find)
-        elif re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", url_parsed_path):
+        if re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", url_parsed_path):
             return False
         # calendar checks plus adding or downloading calendar (ical)
-        elif re.match(r"^.*calendar.*$",url_parsed_path):
+        if re.match(r"^.*calendar.*$",url_parsed_path):
             return False
-        elif parsed.query.find('ical') != -1:
+        if parsed.query.find('ical') != -1:
             return False 
         else:
             return True

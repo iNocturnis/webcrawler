@@ -1,7 +1,7 @@
 from distutils.filelist import findall
 from operator import truediv
 import re
-
+import time
 import urllib.request
 from urllib import robotparser
 from urllib.parse import urlparse
@@ -23,48 +23,24 @@ from datacollection import *
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
+
     links_valid = list()
-    valid_links = open("valid_links.txt",'a')
-    invalid_links = open("invalid_links.txt",'a')
+    #valid_links = open("valid_links.txt",'a')
+    #invalid_links = open("invalid_links.txt",'a')
 
     
     for link in links:
+        tic = time.perf_counter()
         if is_valid(link):
             links_valid.append(link)
-            valid_links.write(link + "\n")
+            toc = time.perf_counter()
+            print(f"Took {toc - tic:0.4f} seconds to do validate url")
+            #valid_links.write(link + "\n")
         else:
-            invalid_links.write("From: " + url + "\n")
-            invalid_links.write(link + "\n")
+           # invalid_links.write("From: " + url + "\n")
+            #invalid_links.write(link + "\n")
+            pass
 
-    # Needs to be moved
-    # creating text file that includes the number of unique links
-    f = open("q1.txt", "w")
-    f.write("Number of unique pages: {length}\n".format(length = len(uniques)))
-    f.close()
-
-    # creating text file for question 2
-    f = open("q2.txt", "w")
-    f.write("Largest page url: {url} \nLength of page: {length}".format(url = longest, length = max))
-    f.close()
-
-    # creating text file for question 3
-    f = open("q3.txt", "w")
-    sortedGrandDict = {k: v for k, v in sorted(grand_dict.items(), key=lambda item: item[1], reverse = True)}
-    i = 0
-    for k, v in sortedGrandDict.items():
-        if i == 50:
-            break
-        else:
-            f.write("{}: {}\n".format(k, v))
-            i += 1
-    f.close()
-
-    # creating text file for question 4
-    sortedDictKeys = sorted(ics.keys())
-    f = open("q4.txt", "w")
-    for i in sortedDictKeys:
-        f.write("{url}, {num}".format(url = ics[i].getNiceLink(), num = len(ics[i].getUniques())))
-    f.close()
 
     return links_valid
 
@@ -111,7 +87,7 @@ def extract_next_links(url, resp):
     if resp.status == 200:
         #do stuff
         soup = BeautifulSoup(resp.raw_response.content)
-        tempFile = open("test6.txt", 'a')
+        #tempFile = open("test6.txt", 'a')
         #Getting all the links, href = true means at least theres a href value, dont know what it is yet
         for link in soup.find_all('a', href=True):
             #There is a lot of relative paths stuff here gotta add them
@@ -137,7 +113,7 @@ def extract_next_links(url, resp):
                 continue
             '''
             
-            tempFile.write(href_link + "\n")
+            #tempFile.write(href_link + "\n")
             #Adding to the boi wonder pages
             pages.append(href_link)
     else:

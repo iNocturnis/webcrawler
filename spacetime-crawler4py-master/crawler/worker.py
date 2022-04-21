@@ -18,16 +18,29 @@ class Worker(Thread):
         
     def run(self):
         while True:
+            tic = time.perf_counter()
             tbd_url = self.frontier.get_tbd_url()
+            toc = time.perf_counter()
+            print(f"Took {toc - tic:0.4f} seconds to get_tbd_url")
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 break
+            tic = time.perf_counter()
             resp = download(tbd_url, self.config, self.logger)
+            toc = time.perf_counter()
+            print(f"Took {toc - tic:0.4f} seconds to do download url")
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
                 f"using cache {self.config.cache_server}.")
+            tic = time.perf_counter()
             scraped_urls = scraper.scraper(tbd_url, resp)
+            toc = time.perf_counter()
+            print(f"Took {toc - tic:0.4f} seconds to do scrape url")
+            tic = time.perf_counter()
+            
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
+            toc = time.perf_counter()
+            print(f"Took {toc - tic:0.4f} seconds to do store stuffs")
             time.sleep(self.config.time_delay)

@@ -1,4 +1,5 @@
 import re
+
 import urllib.request
 from urllib.parse import urlparse
 from urllib.parse import urljoin
@@ -6,10 +7,16 @@ from bs4 import BeautifulSoup
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.corpus import words
+import re
 import html2text
 import nltk
-# nltk.download('stopwords')
-# nltk.download('words')
+#nltk.download('stopwords')
+#nltk.download('words')
+#nltk.download('punkt')
+
+english_words = words.words()
+english_stop_words = stopwords.words('english')
+
 # there is another nltk.download() requirement but I removed it so i forgot what it was
 #       it'll show in the console/terminal if you run the code i believe
 #       it showed in mine
@@ -77,7 +84,7 @@ def tokenize(url):
     # getting connection from url
     page = urllib.request.urlopen(url)
     data = page.read()
-
+    valid = re.compile(r'[^a-zA-Z0-9]+')
     # named it tSoup for merge convience
     # need the 'lxml' parser for this.
     #       When extract_next_links is called it returns a list full of links with no resp, and I had to find a way to get text from just link.
@@ -89,10 +96,15 @@ def tokenize(url):
     clean_text = ' '.join(tSoup.stripped_strings)
     token = word_tokenize(clean_text)
 
+    clean_token = list()
     # This used the nltk.corpus and just removes the tokens that aren't words
-    token = [i for i in token if i.lower() in words.words()]
+    #token = [i for i in token if i.lower() in english_words]
 
-    return token
+    for word in token:
+        if not valid.match(word):
+            clean_token.append(word.lower())
+    
+    return clean_token
 
 #added this so the scraper code is not too redundant
 def computeFrequencies(tokens, d):
@@ -103,8 +115,7 @@ def computeFrequencies(tokens, d):
             d[t] += 1
 
 def removeStopWords(toks):
-    stopWords = set(stopwords.words('english'))
-    return [t for t in toks if t.lower() if not t.lower() in stopWords]
+    return [t for t in toks if t.lower() if not t.lower() in english_stop_words]
     
 def removeFragment(u):
     # turn into a urlparse object

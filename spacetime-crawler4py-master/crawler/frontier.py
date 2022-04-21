@@ -73,12 +73,24 @@ class Frontier(object):
             self.save.sync()
             self.to_be_downloaded.append(url)
         
+        
+
+    def mark_url_complete(self, url):
+        urlhash = get_urlhash(url)
+        if urlhash not in self.save:
+            # This should not happen.
+            self.logger.error(
+                f"Completed url {url}, but have not seen it before.")
+
+
+
+        
         # Q1
         self.uniques.add(removeFragment(url)) 
 
         # Q2
         tempTok = tokenize(url)
-        if len(tempTok) > max:
+        if len(tempTok) > self.max:
                 self.max = len(tempTok)
                 self.longest = url
 
@@ -97,12 +109,35 @@ class Frontier(object):
                     self.ics[domain[0]].appendUnique(fragless)
 
 
-    def mark_url_complete(self, url):
-        urlhash = get_urlhash(url)
-        if urlhash not in self.save:
-            # This should not happen.
-            self.logger.error(
-                f"Completed url {url}, but have not seen it before.")
+
+        f = open("q1.txt", "w")
+        f.write("Number of unique pages: {length}\n".format(length = len(self.uniques)))
+        f.close()
+
+        # creating text file for question 2
+        f = open("q2.txt", "w")
+        f.write("Largest page url: {url} \nLength of page: {length}".format(url = self.longest, length = self.max))
+        f.close()
+
+        # creating text file for question 3
+        f = open("q3.txt", "w")
+        sortedGrandDict = {k: v for k, v in sorted(self.grand_dict.items(), key=lambda item: item[1], reverse = True)}
+        i = 0
+        for k, v in sortedGrandDict.items():
+            if i == 50:
+                break
+            else:
+                f.write("{}: {}\n".format(k, v))
+                i += 1
+        f.close()
+
+        # creating text file for question 4
+        sortedDictKeys = sorted(self.ics.keys())
+        f = open("q4.txt", "w")
+        for i in sortedDictKeys:
+            f.write("{url}, {num}".format(url = self.ics[i].getNiceLink(), num = len(self.ics[i].getUniques())))
+        f.close()
+        
 
         self.save[urlhash] = (url, True)
         self.save.sync()

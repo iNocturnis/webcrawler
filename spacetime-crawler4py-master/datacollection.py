@@ -10,9 +10,9 @@ from nltk.corpus import words
 import re
 import html2text
 import nltk
-#nltk.download('stopwords')
-#nltk.download('words')
-#nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('words')
+nltk.download('punkt')
 
 english_words = words.words()
 english_stop_words = stopwords.words('english')

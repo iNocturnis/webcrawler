@@ -29,6 +29,17 @@ class Worker(Thread):
             resp = download(tbd_url, self.config, self.logger)
             toc = time.perf_counter()
             print(f"Took {toc - tic:0.4f} seconds to do download url")
+
+            tic = time.perf_counter()
+            self.frontier.q1(tbd_url)
+            toc = time.perf_counter()
+            print(f"Took {toc - tic:0.4f} seconds to do download url")
+            
+            tic = time.perf_counter()
+            self.frontier.q234(tbd_url, resp)
+            toc = time.perf_counter()
+            print(f"Took {toc - tic:0.4f} seconds to do download url")
+
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
                 f"using cache {self.config.cache_server}.")

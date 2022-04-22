@@ -1,5 +1,5 @@
 import re
-
+import os
 import urllib.request
 from urllib.parse import urlparse
 from urllib.parse import urljoin
@@ -80,16 +80,14 @@ def findDomains(url):
                     return urlsplit[i-1], urlsplit[i] #something like random.vision.ics.uci.edu will be consider a unique page of vision
         return None, None
 
-def tokenize(url):
+def tokenize(resp):
     # getting connection from url
-    page = urllib.request.urlopen(url)
-    data = page.read()
     valid = re.compile(r'[^a-zA-Z0-9]+')
     # named it tSoup for merge convience
     # need the 'lxml' parser for this.
     #       When extract_next_links is called it returns a list full of links with no resp, and I had to find a way to get text from just link.
     #       Therefore, I decided to get the plain text this way.
-    tSoup = BeautifulSoup(data, 'lxml')
+    tSoup = BeautifulSoup(resp.raw_response.content, 'lxml')
 
     # Floyd (1 March 2021) Stackoverflow. https://stackoverflow.com/questions/328356/extracting-text-from-html-file-using-python
     #       compared this with tSoup.get_text() and clean_text just provided content easier to tokenize and more inline with my intentions

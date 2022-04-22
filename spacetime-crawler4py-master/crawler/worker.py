@@ -51,14 +51,20 @@ class Worker(Thread):
             toc = time.perf_counter()
             print(f"Took {toc - tic:0.4f} seconds to do scrape url")
             
+            
             tic = time.perf_counter()
+            self.frontier.acquire_data_mutex()
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
+            self.frontier.release_data_mutex()
+            toc = time.perf_counter()
+            print(f"Took {toc - tic:0.4f} seconds to do add_url stuffs")
+
+            tic = time.perf_counter()
             self.frontier.mark_url_complete(tbd_url)
             toc = time.perf_counter()
             print(f"Took {toc - tic:0.4f} seconds to do store stuffs")
             
             while start + self.config.time_delay > time.perf_counter():
                 time.sleep(self.config.time_delay/5)
-                self.frontier.release_polite(tbd_url)
-            
+            self.frontier.release_polite(tbd_url)            

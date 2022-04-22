@@ -18,11 +18,8 @@ def scraper(url, resp):
 
     
     for link in links:
-        tic = time.perf_counter()
         if is_valid(link):
             links_valid.add(link)
-            toc = time.perf_counter()
-            print(f"Took {toc - tic:0.4f} seconds to do validate url")
             #valid_links.write(link + "\n")
         else:
            # invalid_links.write("From: " + url + "\n")

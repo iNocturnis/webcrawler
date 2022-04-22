@@ -35,16 +35,17 @@ class Worker(Thread):
             tic = time.perf_counter()
             self.frontier.q1(tbd_url)
             toc = time.perf_counter()
-            print(f"Took {toc - tic:0.4f} seconds to do download url")
+            print(f"Took {toc - tic:0.4f} seconds to do log q1 url")
             
             tic = time.perf_counter()
             self.frontier.q234(tbd_url, resp)
             toc = time.perf_counter()
-            print(f"Took {toc - tic:0.4f} seconds to do download url")
+            print(f"Took {toc - tic:0.4f} seconds to do log q234 url")
 
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
                 f"using cache {self.config.cache_server}.")
+            
             tic = time.perf_counter()
             scraped_urls = scraper.scraper(tbd_url, resp)
             toc = time.perf_counter()
@@ -57,7 +58,7 @@ class Worker(Thread):
             toc = time.perf_counter()
             print(f"Took {toc - tic:0.4f} seconds to do store stuffs")
             
-            while(start + self.config.time_delay > time.perf_counter()){
+            while start + self.config.time_delay > time.perf_counter():
                 time.sleep(self.config.time_delay/5)
                 self.frontier.release_polite(tbd_url)
-            }
+            

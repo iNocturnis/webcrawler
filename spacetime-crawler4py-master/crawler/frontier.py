@@ -179,11 +179,10 @@ class Frontier(object):
         file_4_mutex.release()
 
     def acquire_polite(url):
-        
-        pass;
+        return domain_semaphores[get_semaphore_index(url)].acquire()
 
     def release_polite(domain):
-        pass;
+        return domain_semaphores[get_semaphore_index(url)].release()
 
     def get_semaphore_index(url):
         if "ics.uci.edu" in url:

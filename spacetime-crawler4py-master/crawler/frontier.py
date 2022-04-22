@@ -108,6 +108,7 @@ class Frontier(object):
         self.save.sync()
         data_mutex.release()
         ##CRITICAL SECTION
+    
 
 
         
@@ -197,3 +198,75 @@ class Frontier(object):
             return 4
         else:
             println("ERROR")
+
+    def q1(self, url):
+        # rakslice (8 May 2013) Stackoverflow. https://stackoverflow.com/questions/16430258/creating-a-python-file-in-a-local-directory
+        #       this saves to the local directory, so I can constantly access the right file and check if it exists or not
+        path_to_script = os.path.dirname(os.path.abspath(__file__))
+        my_filename = os.path.join(path_to_script, "q1.txt")
+        
+        # Will create a file of all the unique links and you can read the file and do lines = f.readlines() then len(lines) to get the number of unique links
+        if (os.path.exists(my_filename)):
+            f = open(my_filename, 'a')
+            f.write(removeFragment(url))
+            f.close()
+        else:
+            f = open(my_filename, 'w')
+            f.write(removeFragment(url))
+            f.close()
+        
+    def q234(self, url, resp):
+        # rakslice (8 May 2013) Stackoverflow. https://stackoverflow.com/questions/16430258/creating-a-python-file-in-a-local-directory
+        #       this saves to the local directory, so I can constantly access the right file and check if it exists or not
+        path_to_script = os.path.dirname(os.path.abspath(__file__))
+        my_filename = os.path.join(path_to_script, "q2.txt")
+
+        tempTok = tokenize(resp)
+        if len(tempTok) > self.max:
+            self.max = len(tempTok)
+            self.longest = url
+            f = open(my_filename, 'w')
+            f.write("Longest Page: {url}, length: {length}".format(url = self.longest, length = self.max))
+            f.close()
+
+        tempTok = removeStopWords(tempTok)
+        computeFrequencies(tempTok, self.grand_dict)
+
+        # rakslice (8 May 2013) Stackoverflow. https://stackoverflow.com/questions/16430258/creating-a-python-file-in-a-local-directory
+        #       this saves to the local directory, so I can constantly access the right file and check if it exists or not
+        path_to_script = os.path.dirname(os.path.abspath(__file__))
+        my_filename = os.path.join(path_to_script, "q3.txt")
+
+        f = open(my_filename, "w")
+        sortedGrandDict = {k: v for k, v in sorted(self.grand_dict.items(), key=lambda item: item[1], reverse = True)}
+        i = 0
+        for k, v in sortedGrandDict.items():
+            if i == 50:
+                break
+            else:
+                f.write("{}: {}\n".format(k, v))
+                i += 1
+        f.close()
+
+        fragless = removeFragment(url)
+        domain = findDomains(fragless.netloc)
+        if domain[1] == 'ics':
+            if domain[0] not in self.ics:
+                self.ics[domain[0]] = urlData(url, domain[0], domain[1])
+            else:
+                if fragless not in self.ics[domain[0]].getUniques():
+                    self.ics[domain[0]].appendUnique(fragless)
+        
+        # rakslice (8 May 2013) Stackoverflow. https://stackoverflow.com/questions/16430258/creating-a-python-file-in-a-local-directory
+        #       this saves to the local directory, so I can constantly access the right file and check if it exists or not
+        path_to_script = os.path.dirname(os.path.abspath(__file__))
+        my_filename = os.path.join(path_to_script, "q4.txt")
+
+        # creating text file for question 4
+        sortedDictKeys = sorted(self.ics.keys())
+        f = open(my_filename, "w")
+        for i in sortedDictKeys:
+            f.write("{url}, {num}".format(url = self.ics[i].getNiceLink(), num = len(self.ics[i].getUniques())))
+        f.close()
+
+        

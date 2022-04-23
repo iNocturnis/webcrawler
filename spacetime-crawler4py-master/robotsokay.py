@@ -1,5 +1,6 @@
 import re
 from urllib import robotparser
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from collections import defaultdict
 import requests
@@ -9,6 +10,7 @@ import requests
 # https://docs.python.org/3/library/urllib.robotparser.html#urllib.robotparser.RobotFileParser
 # http://pymotw.com/2/robotparser/
 # https://stackoverflow.com/questions/43085744/parsing-robots-txt-in-python
+'''This is ver 1.0
 robots_seen = dict() # all robots go here (global so we can store over all site)
 def robots_ok(parsed)->bool:
     global robots_seen                                  # global dict for files
@@ -32,4 +34,30 @@ def robots_are_ok(parsed):
         return robots_ok(parsed)
     else:
         return robots_seen[parsed.netloc] # if it has been read return its value
-                                            
+'''
+# Ver 1.1 maybe if I am understanding this correctly
+robots_seen = dict()  # dict of all seen robot files and store not allowed                         
+def robots_ok(url)->bool:
+    try:
+        parsed = urlparse(url)                                                     # parse url
+    except:
+        print("Error in parse for: " + url)
+
+    robotstxt = ""                                                                 # string for location of file
+    try:
+        robottxts = parsed.scheme + "://" + parsed.hostname + "/robots.txt"        # location of file
+    except:
+        print("Error in parse for robots.txt: " + parsed)
+    
+    if robotstxt not in robots_seen:                                               # if url not in dict add to dict 
+        robots_seen[robotstxt] = robotparser.RobotFileParser(robotstxt)
+        try:
+           robots_seen[robotstxt] = robotparser.RobotFileParser.read(robotstxt)
+        except:
+            del robots_seen[robotstxt]
+            return True
+    try:
+        return robots_seen[robotstxt].can_fetch('*', url)
+    except:
+        print("There was an error with: " + url)
+        return True

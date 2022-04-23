@@ -54,12 +54,6 @@ def extract_next_links(url, resp):
             if "do=" in href_link:
                 continue
 
-            # don't know if this is too expensive, otherwise idk
-            # takes parsed url and if not ok on robots goes next, else we can write file    
-            parsed = urlparse(href_link)    
-            if not robots_are_ok(parsed):
-                continue
-
             tempFile.write(href_link + "\n")
             #Adding to the boi wonder pages
             pages.append(href_link)
@@ -94,7 +88,7 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$",parsed.path.lower()):
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$",url_parsed_path):
             return False
         elif not re.match(
             r".*ics.uci.edu/.*"
@@ -110,26 +104,20 @@ def is_valid(url):
         # we can adjust it based on what the cralwer does as well
         if len(url) > 169:
             return False
-        # this fixes any search box that keeps going page to page, currenty allow a depth of 2 filters 
-        if re.match(r".*(&filter%.*){3,}",url_parsed_path):
+        if robots_ok(url) == False:         # if robots returns false than no go
+            return False
+        if re.match(r".*(&filter%.*){3,}"                                                          # this fixes any search box that keeps going page to page, currenty allow a depth of 2 filters
+            + r"|^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$"                                             # looping directory check 
+            + r"|^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$" # extra directories check (we can add as we find)
+            + r"|^.*calendar.*$",url_parsed_path):                                                 # calendar checks plus adding or downloading calendar (ical)
             return False
         # this is for urls which when opened, download a file (do we want to download these files and tokenize them)
         # elif re.match(r"^.*\&format=(\D{3,4})\Z$",url_parsed_path):
         #     return False
-        # another looping directory check but more advanced than the one contained in is_a_trap
-        if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$",url_parsed_path):
-            return False
-        # extra directories check (we can add as we find)
-        if re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", url_parsed_path):
-            return False
-        # calendar checks plus adding or downloading calendar (ical)
-        if re.match(r"^.*calendar.*$",url_parsed_path):
-            return False
         if parsed.query.find('ical') != -1:
             return False 
         else:
             return True
-
     except TypeError:
         print ("TypeError for ", parsed)
         raise

@@ -10,13 +10,16 @@ from bs4 import BeautifulSoup
 from robotsokay import *
 
 def scraper(url, resp):
+    
     links = extract_next_links(url, resp)
+    
 
     links_valid = set()
     #valid_links = open("valid_links.txt",'a')
     #invalid_links = open("invalid_links.txt",'a')
 
-    
+    tic = time.perf_counter()
+
     for link in links:
         if is_valid(link):
             links_valid.add(link)
@@ -26,6 +29,8 @@ def scraper(url, resp):
             #invalid_links.write(link + "\n")
             pass
 
+    toc = time.perf_counter()
+    print(f"Took {toc - tic:0.4f} seconds to validate !!!")
 
     return links_valid
 
@@ -42,7 +47,7 @@ def extract_next_links(url, resp):
     pages = set()
     if resp.status == 200:
         #do stuff
-        soup = BeautifulSoup(resp.raw_response.content)
+        soup = BeautifulSoup(resp.raw_response.content,'lxml')
         #tempFile = open("test6.txt", 'a')
         #Getting all the links, href = true means at least theres a href value, dont know what it is yet
         for link in soup.find_all('a', href=True):
@@ -65,11 +70,18 @@ def extract_next_links(url, resp):
 
             # don't know if this is too expensive, otherwise idk
             # takes parsed url and if not ok on robots goes next, else we can write file    
-            parsed = urlparse(href_link)    
+            
+            """
+            #For now robot checking too time expensive and incorrectly implemented 
+            parsed = urlparse(href_link)
+            tic = time.perf_counter()   
+            print(parsed)
             if not robots_are_ok(parsed):
                 continue
-            
-            
+            toc = time.perf_counter()
+            print(f"Took {toc - tic:0.4f} seconds to robots_are_ok !!!")
+            """
+
             #tempFile.write(href_link + "\n")
             #Adding to the boi wonder pages
             pages.add(href_link)

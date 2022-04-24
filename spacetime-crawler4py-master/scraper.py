@@ -15,22 +15,22 @@ def scraper(url, resp):
     
 
     links_valid = set()
-    #valid_links = open("valid_links.txt",'a')
-    #invalid_links = open("invalid_links.txt",'a')
+    valid_links = open("valid_links.txt",'a')
+    invalid_links = open("invalid_links.txt",'a')
 
     tic = time.perf_counter()
 
     for link in links:
         if is_valid(link):
             links_valid.add(link)
-            #valid_links.write(link + "\n")
+            valid_links.write(link + "\n")
         else:
-           # invalid_links.write("From: " + url + "\n")
-            #invalid_links.write(link + "\n")
+            invalid_links.write("From: " + url + "\n")
+            invalid_links.write(link + "\n")
             pass
 
     toc = time.perf_counter()
-    print(f"Took {toc - tic:0.4f} seconds to validate !!!")
+    #print(f"Took {toc - tic:0.4f} seconds to validate !!!")
 
     return links_valid
 
@@ -48,7 +48,7 @@ def extract_next_links(url, resp):
     if resp.status == 200:
         #do stuff
         soup = BeautifulSoup(resp.raw_response.content,'lxml')
-        #tempFile = open("test6.txt", 'a')
+        #tempFile = open("test.txt", 'a')
         #Getting all the links, href = true means at least theres a href value, dont know what it is yet
         for link in soup.find_all('a', href=True):
             #There is a lot of relative paths stuff here gotta add them
@@ -63,6 +63,9 @@ def extract_next_links(url, resp):
             #Relative path fixing
             if(href_link.startswith("/")):
                 href_link = urljoin(url,href_link)
+
+            if(href_link.startswith("www.")):
+                href_link = "https://" + href_link
 
             #skipping query with specific actions which mutate the websites and cause a trap
             if "do=" in href_link:
@@ -127,10 +130,16 @@ def is_valid(url):
             return False
         elif parsed.fragment:
             return False
+
+        #ics.uci.edu accepts physics ... So we gotta get rid of it same with eecs and cs
+        if re.match(
+            r".*physics.uci.edu/.*" 
+            + r"|.*eecs.uci.edu/.*",url) :
+            return False
         # https://support.archive-it.org/hc/en-us/articles/208332963-Modify-crawl-scope-with-a-Regular-Expression
         # length check for looping filters and queries (could add hash check for similarity or regex, but don't know if we want to as this works well enought)
         # we can adjust it based on what the cralwer does as well
-        if len(url) > 169:
+        if len(url) > 250:
             return False
         # this fixes any search box that keeps going page to page, currenty allow a depth of 2 filters 
         if re.match(r".*(&filter%.*){3,}",url_parsed_path):

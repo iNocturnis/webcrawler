@@ -25,7 +25,7 @@ class Frontier(object):
         self.config = config
 
         #Load balancer, list() 
-        self.to_be_downloaded = [list(),list(),list(),list(),list()]
+        self.to_be_downloaded = [set(),set(),set(),set(),set()]
 
         self.balance_index = 0
 
@@ -82,7 +82,7 @@ class Frontier(object):
         tbd_count = 0
         for url, completed in self.save.values():
             if not completed and is_valid(url):
-                self.to_be_downloaded[self.get_domain_index(url)].append(url)
+                self.to_be_downloaded[self.get_domain_index(url)].add(url)
                 tbd_count += 1
         self.logger.info(
             f"Found {tbd_count} urls to be downloaded from {total_count} "
@@ -92,22 +92,24 @@ class Frontier(object):
         ###CRITICAL SECTION
         self.data_mutex.acquire()
         try:
-            initial = self.balance_index
-            print("Initial " + str(initial))
-            self.balance_index = self.balance_index + 1
-            if self.balance_index > 4:
-                    self.balance_index = 0
-            while not self.to_be_downloaded[self.balance_index]:
+            #Load balancing
+            loop = 10
+            while not self.to_be_downloaded[self.balance_index] and loop != 0:
                 self.balance_index = self.balance_index + 1
                 if self.balance_index > 4:
                     self.balance_index = 0
-                if self.balance_index == initial:
+                loop = loop - 1
+                if loop == 0:
                     self.data_mutex.release()
                     return None
             hold = self.to_be_downloaded[self.balance_index].pop()
+            self.balance_index = self.balance_index + 1
             self.data_mutex.release()
+            #print(hold)
             return hold
+
         except IndexError:
+            print("POPPING RANDOM SHIT BRO")
             self.data_mutex.release()
             return None
 
@@ -118,7 +120,7 @@ class Frontier(object):
         if urlhash not in self.save:
             self.save[urlhash] = (url, False)
             self.save.sync()
-            self.to_be_downloaded[self.get_domain_index(url)].append(url)
+            self.to_be_downloaded[self.get_domain_index(url)].add(url)
         ###CRITICAL SECTION
         
 
@@ -136,11 +138,12 @@ class Frontier(object):
     
 
     def get_domain_index(self,url):
-        if "ics.uci.edu" in url:
+        #yeah if you put ics.uci.edu in first it will add all informatics link into that instead
+        if "informatics.uci.edu" in url:
             return 0
-        elif "cs.uci.edu" in url:
+        elif "ics.uci.edu" in url: 
             return 1
-        elif "informatics.uci.edu" in url:
+        elif "cs.uci.edu" in url:
             return 2
         elif "stat.uci.edu" in url:
             return 3
@@ -216,7 +219,7 @@ class Frontier(object):
         self.file_2_mutex.release()
 
         toc = time.perf_counter()
-        print(f"Took {toc - tic:0.4f} seconds to save file 2 !")
+        #print(f"Took {toc - tic:0.4f} seconds to save file 2 !")
 
         tic = time.perf_counter()
         tempTok = removeStopWords(tempTok)
@@ -241,7 +244,7 @@ class Frontier(object):
         self.file_3_mutex.release()
 
         toc = time.perf_counter()
-        print(f"Took {toc - tic:0.4f} seconds to save file 3 !")
+        #print(f"Took {toc - tic:0.4f} seconds to save file 3 !")
 
         tic = time.perf_counter()
 
@@ -264,10 +267,10 @@ class Frontier(object):
         sortedDictKeys = sorted(self.ics.keys())
         f = open(my_filename, "w")
         for i in sortedDictKeys:
-            f.write("{url}, {num}".format(url = self.ics[i].getNiceLink(), num = len(self.ics[i].getUniques())))
+            f.write("{url}, {num} + \n".format(url = self.ics[i].getNiceLink(), num = len(self.ics[i].getUniques())))
         f.close()
         self.file_4_mutex.release()
 
         toc = time.perf_counter()
-        print(f"Took {toc - tic:0.4f} seconds to save file 4 !")
+        #print(f"Took {toc - tic:0.4f} seconds to save file 4 !")
         

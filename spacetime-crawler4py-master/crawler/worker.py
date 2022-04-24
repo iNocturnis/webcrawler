@@ -18,19 +18,19 @@ class Worker(Thread):
         
     def run(self):
         while True:
-            start = time.perf_counter()
             tic = time.perf_counter()
             tbd_url = self.frontier.get_tbd_url()
             toc = time.perf_counter()
-            print(f"Took {toc - tic:0.4f} seconds to get_tbd_url")
+            #print(f"Took {toc - tic:0.4f} seconds to get_tbd_url")
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 break
             self.frontier.acquire_polite(tbd_url)
             tic = time.perf_counter()
             resp = download(tbd_url, self.config, self.logger)
+            start = time.perf_counter()
             toc = time.perf_counter()
-            print(f"Took {toc - tic:0.4f} seconds to do download url")
+            #print(f"Took {toc - tic:0.4f} seconds to do download url")
 
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
@@ -39,32 +39,32 @@ class Worker(Thread):
             tic = time.perf_counter()
             scraped_urls = scraper.scraper(tbd_url, resp)
             toc = time.perf_counter()
-            print(f"Took {toc - tic:0.4f} seconds to do scrape url")
+            #print(f"Took {toc - tic:0.4f} seconds to do scrape url")
 
             tic = time.perf_counter()
-            print(self.frontier.acquire_data_mutex())
+            self.frontier.acquire_data_mutex()
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
             self.frontier.release_data_mutex()
             toc = time.perf_counter()
-            print(f"Took {toc - tic:0.4f} seconds to do add_url stuffs")
+            #print(f"Took {toc - tic:0.4f} seconds to do add_url stuffs")
 
             tic = time.perf_counter()
             self.frontier.q1(tbd_url)
             toc = time.perf_counter()
-            print(f"Took {toc - tic:0.4f} seconds to do log q1 url")
+            #print(f"Took {toc - tic:0.4f} seconds to do log q1 url")
             
             tic = time.perf_counter()
             self.frontier.q234(tbd_url, resp)
             toc = time.perf_counter()
-            print(f"Took {toc - tic:0.4f} seconds to do log q234 url")
+            #print(f"Took {toc - tic:0.4f} seconds to do log q234 url")
             
 
         
 
             
             while start + self.config.time_delay > time.perf_counter():
-                print("Sleeping")
+                #print("Sleeping")
                 time.sleep(self.config.time_delay/5)
             self.frontier.release_polite(tbd_url)            

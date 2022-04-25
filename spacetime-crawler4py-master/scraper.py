@@ -106,7 +106,6 @@ def is_valid(url):
     # There are already some conditions that return False.
 
     try:
-        #Gotta check if they are in the domain
         parsed = urlparse(url)
         url_parsed_path = parsed.path.lower()   # this may help speed things up a little bit (less calls to parsed.path)
         if parsed.scheme not in set(["http", "https"]):
@@ -121,40 +120,64 @@ def is_valid(url):
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$",parsed.path.lower()):
             return False
+        elif re.match(
+            #turns out some query also try to download files, which filled stuff with random stuff thats uncessary
+            r".*\.(css|js|bmp|gif|jpe?g|ico"
+            + r"|png|tiff?|mid|mp2|mp3|mp4"
+            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+            + r"|epub|dll|cnf|tgz|sha1"
+            + r"|thmx|mso|arff|rtf|jar|csv"
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$",parsed.query.lower()):
+            return False
         elif not re.match(
-            r".*ics.uci.edu/.*"
-            + r"|.*cs.uci.edu/.*"
-            + r"|.*informatics.uci.edu/.*"
-            + r"|.*stat.uci.edu/.*"
+            #Making sure domains are respected
+            r".*[./]ics.uci.edu/.*"
+            + r"|.*[./]cs.uci.edu/.*"
+            + r"|.*[./]informatics.uci.edu/.*"
+            + r"|.*[./]stat.uci.edu/.*"
             + r"|today.uci.edu/department/information_computer_sciences/.*",url):
+            return False
+
+        #Querying dates return usually bad information
+        #anything that ends with a date also usually returns junk also returns nothing useful most of the time
+        #/events/caterogy/ all gives random pages of no information
+        elif re.match(
+            r".*\d{4}-\d{2}-\d{2}",url):
+            return False
+        elif re.match(
+            r".*\d{4}-\d{2}-\d{2}/",url):
+            return False
+        elif re.match(
+            r".*\d{4}-\d{2}-\d{2}",parsed.query):
+            return False
+        elif re.match(
+            r".*\/events/category/.*",url):
             return False
         elif parsed.fragment:
             return False
 
-        #ics.uci.edu accepts physics ... So we gotta get rid of it same with eecs and cs
-        if re.match(
-            r".*physics.uci.edu/.*" 
-            + r"|.*eecs.uci.edu/.*",url) :
-            return False
         # https://support.archive-it.org/hc/en-us/articles/208332963-Modify-crawl-scope-with-a-Regular-Expression
         # length check for looping filters and queries (could add hash check for similarity or regex, but don't know if we want to as this works well enought)
         # we can adjust it based on what the cralwer does as well
         if len(url) > 250:
             return False
-        # this fixes any search box that keeps going page to page, currenty allow a depth of 2 filters 
-        if re.match(r".*(&filter%.*){3,}",url_parsed_path):
+        # this fixes any search box that keeps going page to page, currenty allow a depth of 0 filters 
+        # any filter just give you uncesssary information since the original page already has all information for all poeple
+        if re.match(r".*(&filter%.*){1,}",url):
             return False
         # this is for urls which when opened, download a file (do we want to download these files and tokenize them)
         # elif re.match(r"^.*\&format=(\D{3,4})\Z$",url_parsed_path):
         #     return False
         # another looping directory check but more advanced than the one contained in is_a_trap
-        if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$",url_parsed_path):
+        if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$",url):
             return False
         # extra directories check (we can add as we find)
-        if re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", url_parsed_path):
+        if re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", url):
             return False
         # calendar checks plus adding or downloading calendar (ical)
-        if re.match(r"^.*calendar.*$",url_parsed_path):
+        if re.match(r"^.*calendar.*$",url):
             return False
         if parsed.query.find('ical') != -1:
             return False 
